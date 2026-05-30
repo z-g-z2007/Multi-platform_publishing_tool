@@ -1,0 +1,2447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容发布 - 自媒体多平台分发工具</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a6fd6;
+            --secondary: #764ba2;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #3498db;
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --text: #333;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --border: #e8e8e8;
+            --shadow: 0 2px 12px rgba(0,0,0,0.06);
+            --radius: 12px;
+            --transition: 0.25s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: #fff;
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(102,126,234,0.3);
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-logo { font-size: 22px; }
+        .header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
+        .nav { display: flex; gap: 4px; }
+        .nav a, .nav-btn {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            transition: all var(--transition);
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+        }
+        .nav a:hover, .nav-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .nav a.active { background: rgba(255,255,255,0.28); color: #fff; font-weight: 600; }
+        .user-info { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+
+        /* Container */
+        .container { max-width: 960px; margin: 28px auto; padding: 0 20px; }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: box-shadow var(--transition);
+        }
+        .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-header .icon { font-size: 22px; }
+        .card-header h2 { font-size: 17px; color: var(--text); font-weight: 600; }
+
+        /* Form */
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .form-group label .hint { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all var(--transition);
+            background: #fafafa;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        .char-count { text-align: right; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Rich Text Editor */
+        .editor-content {
+            min-height: 280px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 0 0 8px 8px;
+            font-size: 14px;
+            font-family: inherit;
+            line-height: 1.8;
+            background: #fff;
+            transition: all var(--transition);
+            outline: none;
+        }
+        .editor-content:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        .editor-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: transform var(--transition);
+        }
+        .editor-content img:hover {
+            transform: scale(1.02);
+        }
+        .editor-content img.selected {
+            outline: 3px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Editor Toolbar */
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 14px;
+            background: #f5f5f5;
+            border: 2px solid var(--border);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            flex-wrap: wrap;
+        }
+        .toolbar-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+        }
+        .toolbar-btn:hover { background: rgba(102,126,234,0.1); color: var(--primary); }
+        .toolbar-btn:active { transform: scale(0.95); }
+        .toolbar-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+        .toolbar-label { font-size: 12px; color: var(--text-muted); margin-right: 6px; }
+
+        /* Material Gallery */
+        .material-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .material-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all var(--transition);
+        }
+        .material-item:hover { border-color: var(--primary); transform: scale(1.05); }
+        .material-item img { width: 100%; height: 100%; object-fit: cover; }
+        .material-item .material-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .material-item:hover .material-delete { display: flex; }
+
+        /* Platform Selector */
+        .platforms-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .platform-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 22px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+            user-select: none;
+            background: #fafafa;
+        }
+        .platform-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .platform-card.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+            box-shadow: 0 2px 8px rgba(102,126,234,0.15);
+        }
+        .platform-card .platform-icon { font-size: 36px; margin-bottom: 10px; }
+        .platform-card .platform-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+        .platform-card .platform-desc { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.4; }
+        .platform-card .check-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .platform-card.selected .check-badge { display: flex; }
+        .platform-card .rule-tag {
+            margin-top: 8px;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(102,126,234,0.1);
+            color: var(--primary);
+        }
+        .platform-card.more-platforms {
+            border-style: dashed;
+            background: linear-gradient(135deg, rgba(102,126,234,0.03), rgba(118,75,162,0.03));
+        }
+        .platform-card.more-platforms .platform-icon {
+            font-size: 28px;
+            opacity: 0.7;
+        }
+        
+        /* 更多平台下拉 */
+        .more-platforms-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border: 2px solid var(--primary);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 12px;
+            z-index: 50;
+            box-shadow: 0 8px 24px rgba(102,126,234,0.2);
+        }
+        .more-platforms-dropdown.show {
+            display: block;
+        }
+        .dropdown-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .dropdown-platforms {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .platform-card.small {
+            padding: 14px 12px;
+            min-width: 90px;
+        }
+        .platform-card.small .platform-icon {
+            font-size: 24px;
+        }
+        .platform-card.small .platform-name {
+            font-size: 12px;
+        }
+        .more-platforms-dropdown .btn {
+            margin-top: 16px;
+            width: 100%;
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        /* 平台卡片容器定位 */
+        .platforms-grid {
+            position: relative;
+        }
+
+        /* Buttons */
+        .btn-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+        }
+        .btn-outline {
+            background: #fff;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        .btn-outline:hover:not(:disabled) { background: rgba(102,126,234,0.05); }
+        .btn-secondary { background: #f0f0f0; color: var(--text-secondary); }
+        .btn-secondary:hover:not(:disabled) { background: #e4e4e4; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; border-radius: 6px; }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed #d0d0d0;
+            border-radius: 10px;
+            padding: 36px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: #fafafa;
+        }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--primary); background: rgba(102,126,234,0.03); }
+        .upload-area .upload-icon { font-size: 40px; display: block; margin-bottom: 8px; }
+        .upload-area p { color: var(--text-secondary); font-size: 14px; }
+        .upload-area .hint { color: var(--text-muted); font-size: 12px; }
+        #upload-file { display: none; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--card);
+            border-radius: var(--radius);
+            width: 92%;
+            max-width: 860px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: modalIn 0.25s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-header h3 { font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        .modal-close {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: #f0f0f0;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+        .modal-close:hover { background: #e0e0e0; }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+
+        /* Preview Tabs */
+        .preview-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .preview-tab {
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .preview-tab:hover { color: var(--primary); }
+        .preview-tab.active { color: var(--primary); border-color: var(--primary); }
+
+        /* Preview Content */
+        .preview-panel { display: none; }
+        .preview-panel.active { display: block; }
+        .preview-content {
+            line-height: 1.9;
+            color: var(--text);
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 8px;
+            min-height: 200px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+        }
+        .preview-content img.preview-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 12px 0;
+            display: block;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        /* 图片编辑手柄样式 */
+        .editor-content {
+            position: relative;
+        }
+        .editor-content img {
+            cursor: move;
+            outline: none;
+        }
+        .editor-content img.selected {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+        .img-resize-handles {
+            position: absolute;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .img-resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            display: block;
+            pointer-events: auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .img-resize-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+        .img-resize-handle.n { top: -6px; left: 50%; margin-left: -6px; cursor: n-resize; }
+        .img-resize-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+        .img-resize-handle.w { left: -6px; top: 50%; margin-top: -6px; cursor: w-resize; }
+        .img-resize-handle.e { right: -6px; top: 50%; margin-top: -6px; cursor: e-resize; }
+        .img-resize-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+        .img-resize-handle.s { bottom: -6px; left: 50%; margin-left: -6px; cursor: s-resize; }
+        .img-resize-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+        .preview-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border);
+        }
+        .preview-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .preview-stats span { display: flex; align-items: center; gap: 4px; }
+        .preview-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+        .preview-tag {
+            padding: 4px 10px;
+            background: rgba(102,126,234,0.1);
+            color: var(--primary);
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .style-rules-box {
+            margin-top: 16px;
+            padding: 14px;
+            background: #f0f7ff;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+        .style-rules-box h4 { font-size: 13px; color: var(--primary); margin-bottom: 8px; }
+        .style-rules-box ul { list-style: none; padding: 0; }
+        .style-rules-box li {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 3px 0;
+        }
+        .style-rules-box li::before { content: '• '; color: var(--primary); }
+
+        /* ========== 小红书预览样式 ========== */
+        .preview-xiaohongshu {
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(228, 77, 77, 0.15);
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .preview-xiaohongshu .xhs-cover {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0;
+        }
+        .preview-xiaohongshu .xhs-header {
+            padding: 16px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+        }
+        .preview-xiaohongshu .xhs-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        .preview-xiaohongshu .xhs-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.9);
+            font-size: 12px;
+        }
+        .preview-xiaohongshu .xhs-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-xiaohongshu .xhs-content {
+            padding: 16px;
+            line-height: 1.8;
+            color: #333;
+            font-size: 14px;
+        }
+        .preview-xiaohongshu .xhs-content p {
+            margin-bottom: 12px;
+        }
+        .preview-xiaohongshu .xhs-img-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            margin: 12px 0;
+        }
+        .preview-xiaohongshu .xhs-img-grid img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .preview-xiaohongshu .xhs-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .preview-xiaohongshu .xhs-tag {
+            color: #FF6B6B;
+            font-size: 13px;
+        }
+        .preview-xiaohongshu .xhs-footer {
+            padding: 12px 16px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-around;
+            color: #999;
+            font-size: 12px;
+        }
+        .preview-xiaohongshu .xhs-action {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ========== 微信公众号预览样式 ========== */
+        .preview-wechat {
+            background: #fff;
+            max-width: 375px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+        }
+        .preview-wechat .wc-header {
+            padding: 20px 16px;
+            border-bottom: 1px solid #e8e8e8;
+            text-align: center;
+        }
+        .preview-wechat .wc-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+        .preview-wechat .wc-meta {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        .preview-wechat .wc-author {
+            color: #576b95;
+        }
+        .preview-wechat .wc-content {
+            padding: 20px 16px;
+            line-height: 1.9;
+            color: #333;
+            font-size: 15px;
+        }
+        .preview-wechat .wc-content p {
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+        .preview-wechat .wc-content img {
+            width: 100%;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        .preview-wechat .wc-divider {
+            height: 1px;
+            background: #e8e8e8;
+            margin: 20px 0;
+            position: relative;
+        }
+        .preview-wechat .wc-divider::after {
+            content: '•••';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 0 16px;
+            color: #999;
+            font-size: 14px;
+            letter-spacing: 4px;
+        }
+        .preview-wechat .wc-footer {
+            padding: 16px;
+            background: #f7f7f7;
+            text-align: center;
+        }
+        .preview-wechat .wc-likes {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 24px;
+            background: #07c160;
+            color: #fff;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        /* ========== 知乎预览样式 ========== */
+        .preview-zhihu {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .preview-zhihu .zh-header {
+            padding: 24px 20px;
+            border-bottom: 8px solid #f0f2f5;
+        }
+        .preview-zhihu .zh-question {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        .preview-zhihu .zh-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .preview-zhihu .zh-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #056de8, #0891f2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 16px;
+        }
+        .preview-zhihu .zh-author-info {
+            flex: 1;
+        }
+        .preview-zhihu .zh-author-name {
+            font-size: 14px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+        .preview-zhihu .zh-author-desc {
+            font-size: 12px;
+            color: #999;
+        }
+        .preview-zhihu .zh-vote {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: #056de8;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .preview-zhihu .zh-content {
+            padding: 20px;
+            line-height: 1.8;
+            color: #1a1a1a;
+            font-size: 15px;
+        }
+        .preview-zhihu .zh-content p {
+            margin-bottom: 14px;
+        }
+        .preview-zhihu .zh-content img {
+            width: 100%;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .preview-zhihu .zh-content h1,
+        .preview-zhihu .zh-content h2,
+        .preview-zhihu .zh-content h3 {
+            margin: 20px 0 12px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        .preview-zhihu .zh-actions {
+            padding: 16px 20px;
+            border-top: 1px solid #f0f2f5;
+            display: flex;
+            justify-content: space-around;
+            color: #999;
+            font-size: 13px;
+        }
+        .preview-zhihu .zh-action {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ========== B站预览样式 ========== */
+        .preview-bilibili {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .preview-bilibili .bili-header {
+            padding: 16px;
+            background: linear-gradient(135deg, #00a1d6, #fb7299);
+            color: #fff;
+        }
+        .preview-bilibili .bili-title {
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        .preview-bilibili .bili-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        .preview-bilibili .bili-content {
+            padding: 16px;
+            line-height: 1.8;
+            color: #18191c;
+            font-size: 14px;
+        }
+        .preview-bilibili .bili-content p {
+            margin-bottom: 12px;
+        }
+        .preview-bilibili .bili-img {
+            width: 100%;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .preview-bilibili .bili-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .preview-bilibili .bili-tag {
+            padding: 4px 10px;
+            background: #f0f2f5;
+            color: #00a1d6;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .preview-bilibili .bili-tag.dynamic {
+            color: #fb7299;
+            background: #fff0f3;
+        }
+        .preview-bilibili .bili-actions {
+            padding: 12px 16px;
+            border-top: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: space-around;
+        }
+        .preview-bilibili .bili-action {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #9499a0;
+            font-size: 12px;
+        }
+        .preview-bilibili .bili-action.liked {
+            color: #fb7299;
+        }
+
+        /* Publish Progress */
+        .publish-progress { margin-top: 18px; }
+        .progress-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #fafafa;
+            transition: all var(--transition);
+        }
+        .progress-item .platform-info { display: flex; align-items: center; gap: 10px; }
+        .progress-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-pending { background: #f0f0f0; color: #999; }
+        .badge-publishing { background: #fff3cd; color: #856404; animation: pulse 1s infinite; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-failed { background: #f8d7da; color: #721c24; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .progress-spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid #ccc;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Strategy Selector */
+        .strategy-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .strategy-selector label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+        .strategy-selector select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+            cursor: pointer;
+            transition: border-color var(--transition);
+        }
+        .strategy-selector select:hover {
+            border-color: var(--primary);
+        }
+        .strategy-selector select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+        .alert.show { display: block; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+
+        /* Summary cards */
+        .publish-summary { display: none; margin-top: 16px; }
+        .publish-summary.show { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .summary-card {
+            text-align: center;
+            padding: 16px;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .summary-card .num { font-size: 28px; font-weight: 700; }
+        .summary-card .lbl { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .num-success { color: var(--success); }
+        .num-failed { color: var(--danger); }
+        .num-total { color: var(--primary); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .platforms-grid { grid-template-columns: repeat(2, 1fr); }
+            .container { padding: 0 12px; margin: 16px auto; }
+            .card { padding: 18px; }
+            .btn-group { flex-direction: column; }
+            .btn { justify-content: center; }
+            .header { padding: 0 16px; }
+            .nav a { padding: 6px 10px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <span class="header-logo">📤</span>
+            <h1>自媒体多平台分发工具</h1>
+        </div>
+        <div class="nav">
+            <a href="/publish" class="active">内容发布</a>
+            <a href="/records">发布记录</a>
+            <a href="/dashboard">数据看板</a>
+            <button class="nav-btn" onclick="logout()">退出</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 提示消息 -->
+        <div class="alert" id="alert"></div>
+
+        <!-- 内容编辑 -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">✏️</span>
+                <h2>内容编辑</h2>
+            </div>
+            
+            <!-- 标题 -->
+            <div class="form-group">
+                <label>标题 <span class="hint">（各平台会自动适配字数限制）</span></label>
+                <input type="text" id="title" placeholder="请输入内容标题..." maxlength="500">
+                <div class="char-count"><span id="title-count">0</span>/500</div>
+            </div>
+
+            <!-- 正文编辑器 -->
+            <div class="form-group">
+                <label>正文内容 <span class="hint">（支持图文混排，直接在文字中插入图片）</span></label>
+                
+                <!-- 编辑器工具栏 -->
+                <div class="editor-toolbar">
+                    <span class="toolbar-label">编辑工具：</span>
+                    <button class="toolbar-btn" onclick="insertText('【标题】')" title="插入标题标记">
+                        <span>📌</span> 标题
+                    </button>
+                    <button class="toolbar-btn" onclick="insertText('【重点】', '【/重点】')" title="插入重点标记">
+                        <span>⭐</span> 重点
+                    </button>
+                    <button class="toolbar-btn" onclick="insertText('【列表】')" title="插入列表标记">
+                        <span>📋</span> 列表
+                    </button>
+                    <div class="toolbar-divider"></div>
+                    <span class="toolbar-label">插入图片：</span>
+                    <button class="toolbar-btn" onclick="showMaterialGallery()" id="insert-img-btn" disabled>
+                        <span>🖼️</span> 从素材库选择
+                    </button>
+                    <button class="toolbar-btn" onclick="uploadAndInsertImage()">
+                        <span>📤</span> 上传并插入
+                    </button>
+                    <button class="toolbar-btn" onclick="deleteSelectedImage()" id="delete-img-btn" disabled>
+                        <span>🗑️</span> 删除图片
+                    </button>
+                    <button class="toolbar-btn" onclick="editSelectedImage()" id="edit-img-btn" disabled>
+                        <span>✏️</span> 编辑图片
+                    </button>
+                    <input type="file" id="insert-upload-file" accept="image/*" style="display:none;">
+                </div>
+
+                <!-- 富文本编辑区域 -->
+                <div id="editor" class="editor-content" contenteditable="true" placeholder="请输入正文内容...&#10;&#10;提示：&#10;1. 使用换行进行分段&#10;2. 点击工具栏按钮插入标记和图片&#10;3. 图片会直接显示在编辑器中&#10;4. 各平台会自动优化排版格式"></div>
+                <div class="char-count"><span id="content-count">0</span> 字</div>
+            </div>
+
+            <!-- 素材上传区域 -->
+            <div class="form-group">
+                <label>素材库 <span class="hint">（上传图片后可插入到正文）</span></label>
+                <div class="upload-area" id="upload-area">
+                    <span class="upload-icon">📷</span>
+                    <p>点击或拖拽上传图片到素材库</p>
+                    <span class="hint">支持 PNG、JPG、JPEG、GIF</span>
+                    <input type="file" id="upload-file" accept="image/*">
+                </div>
+                
+                <!-- 素材预览 -->
+                <div class="material-gallery" id="material-gallery"></div>
+            </div>
+        </div>
+
+        <!-- 平台选择 -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">🎯</span>
+                <h2>选择发布平台（可多选）</h2>
+            </div>
+            <div class="platforms-grid" id="platforms-grid">
+                <div class="platform-card" data-platform="xiaohongshu">
+                    <div class="check-badge">✓</div>
+                    <div class="platform-icon">📕</div>
+                    <div class="platform-name">小红书</div>
+                    <div class="platform-desc">图文笔记风格<br>短平快，手机阅读</div>
+                    <div class="rule-tag">自动标签+Emoji</div>
+                </div>
+                <div class="platform-card" data-platform="wechat">
+                    <div class="check-badge">✓</div>
+                    <div class="platform-icon">💬</div>
+                    <div class="platform-name">微信公众号</div>
+                    <div class="platform-desc">正式长文风格<br>排版工整，深度阅读</div>
+                    <div class="rule-tag">标准化排版</div>
+                </div>
+                <div class="platform-card" data-platform="zhihu">
+                    <div class="check-badge">✓</div>
+                    <div class="platform-icon">💡</div>
+                    <div class="platform-name">知乎</div>
+                    <div class="platform-desc">干货正式文风<br>内容严谨，知识分享</div>
+                    <div class="rule-tag">去口语化</div>
+                </div>
+                <div class="platform-card" data-platform="bilibili">
+                    <div class="check-badge">✓</div>
+                    <div class="platform-icon">📺</div>
+                    <div class="platform-name">B站</div>
+                    <div class="platform-desc">视频简介风格<br>简洁清爽，UP主风</div>
+                    <div class="rule-tag">分区标签</div>
+                </div>
+                <div class="platform-card more-platforms" data-platform="more" onclick="toggleMorePlatforms()">
+                    <div class="check-badge">✓</div>
+                    <div class="platform-icon">➕</div>
+                    <div class="platform-name">更多平台</div>
+                    <div class="platform-desc">微博/抖音/快手<br>头条/百家号</div>
+                    <div class="rule-tag">更多选择</div>
+                </div>
+            </div>
+            <!-- 更多平台弹窗 -->
+            <div class="more-platforms-dropdown" id="more-platforms-dropdown">
+                <div class="dropdown-header">选择更多发布平台</div>
+                <div class="dropdown-platforms">
+                    <div class="platform-card small" data-platform="weibo">
+                        <div class="check-badge">✓</div>
+                        <div class="platform-icon">📣</div>
+                        <div class="platform-name">微博</div>
+                    </div>
+                    <div class="platform-card small" data-platform="douyin">
+                        <div class="check-badge">✓</div>
+                        <div class="platform-icon">🎵</div>
+                        <div class="platform-name">抖音</div>
+                    </div>
+                    <div class="platform-card small" data-platform="kuaishou">
+                        <div class="check-badge">✓</div>
+                        <div class="platform-icon">📱</div>
+                        <div class="platform-name">快手</div>
+                    </div>
+                    <div class="platform-card small" data-platform="toutiao">
+                        <div class="check-badge">✓</div>
+                        <div class="platform-icon">📰</div>
+                        <div class="platform-name">头条号</div>
+                    </div>
+                    <div class="platform-card small" data-platform="baijiahao">
+                        <div class="check-badge">✓</div>
+                        <div class="platform-icon">🏆</div>
+                        <div class="platform-name">百家号</div>
+                    </div>
+                    <div class="platform-card small" data-platform="douban">
+                        <div class="check-badge">✓</div>
+                        <div class="platform-icon">🎬</div>
+                        <div class="platform-name">豆瓣</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="confirmMorePlatforms()">确认选择</button>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">🚀</span>
+                <h2>操作</h2>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="adaptContent()" id="adapt-btn" disabled>
+                    🔄 一键适配格式
+                </button>
+                <button class="btn btn-outline" onclick="previewContent()" id="preview-btn" disabled>
+                    👁️ 预览各平台效果
+                </button>
+                <button class="btn btn-primary" onclick="publishContent()" id="publish-btn" disabled>
+                    📤 一键批量发布
+                </button>
+            </div>
+
+            <!-- 发布进度 -->
+            <div class="publish-progress" id="publish-progress" style="display:none;"></div>
+            <div class="publish-summary" id="publish-summary"></div>
+        </div>
+    </div>
+
+    <!-- 预览弹窗 -->
+    <div class="modal-overlay" id="preview-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>👁️ 各平台适配效果预览</h3>
+                <button class="modal-close" onclick="closePreview()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-tabs" id="preview-tabs"></div>
+                <div id="preview-panels"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 素材库选择弹窗 -->
+    <div class="modal-overlay" id="material-modal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>🖼️ 选择图片插入</h3>
+                <button class="modal-close" onclick="closeMaterialModal()">×</button>
+            </div>
+            <div class="modal-body" style="padding: 16px;">
+                <div class="material-gallery" id="modal-material-gallery" style="max-height: 400px;"></div>
+                <p style="text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 16px;">
+                    点击图片即可插入到正文
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片编辑弹窗 -->
+    <div class="modal-overlay" id="image-edit-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>✏️ 编辑图片</h3>
+                <button class="modal-close" onclick="closeImageEditModal()">×</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img id="edit-image-preview" src="" alt="预览" style="max-width: 100%; max-height: 200px; border-radius: 8px;"/>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">图片宽度</label>
+                    <input type="range" id="img-width" min="50" max="100" value="100" step="5" oninput="updateWidthDisplay()" />
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted);">
+                        <span>50%</span>
+                        <span id="width-display">100%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">对齐方式</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-sm" onclick="setImageAlign('left')" id="align-left">👈 左对齐</button>
+                        <button class="btn btn-sm btn-primary" onclick="setImageAlign('center')" id="align-center">⤴️ 居中</button>
+                        <button class="btn btn-sm" onclick="setImageAlign('right')" id="align-right">👉 右对齐</button>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">浮动效果</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-sm" onclick="setImageFloat('left')">📄 文字环绕左</button>
+                        <button class="btn btn-sm" onclick="setImageFloat('right')">📄 文字环绕右</button>
+                        <button class="btn btn-sm btn-outline" onclick="setImageFloat('none')">➖ 无环绕</button>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="closeImageEditModal()">取消</button>
+                    <button class="btn btn-primary" onclick="applyImageChanges()">应用更改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ 状态管理 ============
+        let adaptedResults = [];
+        let currentTaskId = null;
+        let uploadedMaterials = [];  // 存储已上传的素材
+
+        // ============ 平台选择 ============
+        document.querySelectorAll('.platform-card').forEach(card => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('selected');
+                updateButtons();
+            });
+        });
+
+        // ============ 动态平台加载 ============
+        const corePlatforms = ['xiaohongshu', 'wechat', 'zhihu', 'bilibili'];
+        let allPlatforms = {};
+
+        async function loadPlatforms() {
+            try {
+                const response = await fetch('/api/platforms');
+                const data = await response.json();
+                if (data.success && data.platforms) {
+                    allPlatforms = {};
+                    data.platforms.forEach(p => {
+                        allPlatforms[p.type] = p;
+                    });
+                    renderMorePlatforms(data.platforms);
+                }
+            } catch (error) {
+                console.error('加载平台列表失败:', error);
+            }
+        }
+
+        function renderMorePlatforms(platforms) {
+            const dropdown = document.getElementById('more-platforms-dropdown');
+            const container = dropdown.querySelector('.dropdown-platforms');
+            container.innerHTML = '';
+
+            platforms.forEach(p => {
+                if (corePlatforms.includes(p.type)) return;
+
+                const card = document.createElement('div');
+                card.className = 'platform-card small';
+                card.dataset.platform = p.type;
+                card.innerHTML = `
+                    <div class="check-badge">✓</div>
+                    <div class="platform-icon">${p.icon}</div>
+                    <div class="platform-name">${p.name}</div>
+                `;
+                card.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                });
+                container.appendChild(card);
+            });
+        }
+
+        // ============ 更多平台功能 ============
+        let selectedMorePlatforms = [];
+
+        function toggleMorePlatforms() {
+            const dropdown = document.getElementById('more-platforms-dropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function confirmMorePlatforms() {
+            const dropdown = document.getElementById('more-platforms-dropdown');
+            selectedMorePlatforms = Array.from(document.querySelectorAll('.dropdown-platforms .platform-card.selected'))
+                .map(el => el.dataset.platform);
+            dropdown.classList.remove('show');
+            updateButtons();
+            showAlert(`已选择 ${selectedMorePlatforms.length} 个额外平台`, 'success');
+        }
+
+        function getSelectedPlatforms() {
+            const mainPlatforms = Array.from(document.querySelectorAll('#platforms-grid > .platform-card[data-platform]:not(.more-platforms).selected'))
+                .map(el => el.dataset.platform);
+            return [...mainPlatforms, ...selectedMorePlatforms];
+        }
+
+        // 点击外部关闭下拉框
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('more-platforms-dropdown');
+            const moreBtn = document.querySelector('.more-platforms');
+            if (!dropdown.contains(e.target) && !moreBtn.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // 页面加载时获取平台列表
+        loadPlatforms();
+
+        // ============ 字符计数 ============
+        document.getElementById('title').addEventListener('input', function() {
+            document.getElementById('title-count').textContent = this.value.length;
+            updateButtons();
+        });
+        
+        const editor = document.getElementById('editor');
+        editor.addEventListener('input', updateContentCount);
+        editor.addEventListener('click', handleEditorClick);
+
+        function updateContentCount() {
+            const text = editor.innerText || '';
+            document.getElementById('content-count').textContent = text.length;
+            updateButtons();
+        }
+
+        // 处理编辑器点击事件，用于选中图片
+        function handleEditorClick(e) {
+            const target = e.target;
+            // 清除之前选中的图片
+            document.querySelectorAll('.editor-content img.selected').forEach(img => {
+                img.classList.remove('selected');
+            });
+            // 移除所有调整手柄
+            document.querySelectorAll('.img-resize-handles').forEach(h => h.remove());
+            
+            if (target.tagName === 'IMG') {
+                target.classList.add('selected');
+                document.getElementById('delete-img-btn').disabled = false;
+                document.getElementById('edit-img-btn').disabled = false;
+                addResizeHandles(target);
+            } else {
+                document.getElementById('delete-img-btn').disabled = true;
+                document.getElementById('edit-img-btn').disabled = true;
+            }
+        }
+
+        // 添加调整大小手柄
+        function addResizeHandles(img) {
+            // 先移除已存在的手柄
+            const existingHandles = img.parentNode.querySelector('.img-resize-handles');
+            if (existingHandles) existingHandles.remove();
+            
+            const handles = document.createElement('div');
+            handles.className = 'img-resize-handles';
+            handles.innerHTML = `
+                <div class="img-resize-handle nw"></div>
+                <div class="img-resize-handle n"></div>
+                <div class="img-resize-handle ne"></div>
+                <div class="img-resize-handle w"></div>
+                <div class="img-resize-handle e"></div>
+                <div class="img-resize-handle sw"></div>
+                <div class="img-resize-handle s"></div>
+                <div class="img-resize-handle se"></div>
+            `;
+            img.parentNode.insertBefore(handles, img.nextSibling);
+            updateHandlesPosition(img, handles);
+            
+            // 绑定手柄事件
+            handles.querySelectorAll('.img-resize-handle').forEach(handle => {
+                handle.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    startResize(e, img, handle.classList[1]);
+                });
+            });
+        }
+
+        function updateHandlesPosition(img, handles) {
+            const editor = document.getElementById('editor');
+            const imgRect = img.getBoundingClientRect();
+            const editorRect = editor.getBoundingClientRect();
+            
+            // 使用getBoundingClientRect计算相对于编辑器的位置，并加上滚动偏移
+            const left = imgRect.left - editorRect.left + editor.scrollLeft;
+            const top = imgRect.top - editorRect.top + editor.scrollTop;
+            
+            handles.style.left = left + 'px';
+            handles.style.top = top + 'px';
+            handles.style.width = img.offsetWidth + 'px';
+            handles.style.height = img.offsetHeight + 'px';
+            handles.style.pointerEvents = 'auto';
+        }
+
+        // ============ 图片拖拽移动功能 ============
+        let isDragging = false;
+        let dragStartX, dragStartY;
+        let imgStartX, imgStartY;
+        let currentDraggingImg = null;
+        let dragThreshold = 3; // 拖拽阈值，需要移动超过这个像素才开始拖拽
+        let hasStartedDrag = false;
+
+        // 图片拖拽开始
+        function startDrag(e) {
+            if (e.target.tagName !== 'IMG') return;
+            if (e.target.classList.contains('img-resize-handle')) return;
+            
+            const img = e.target;
+            if (!img.classList.contains('selected')) {
+                return;
+            }
+            
+            isDragging = true;
+            hasStartedDrag = false;
+            currentDraggingImg = img;
+            
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            
+            const style = window.getComputedStyle(img);
+            imgStartX = parseFloat(style.marginLeft) || 0;
+            imgStartY = parseFloat(style.marginTop) || 0;
+            
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', stopDrag);
+            
+            e.preventDefault();
+        }
+
+        function onDrag(e) {
+            if (!isDragging || !currentDraggingImg) return;
+            
+            const deltaX = e.clientX - dragStartX;
+            const deltaY = e.clientY - dragStartY;
+            
+            // 检查是否超过拖拽阈值
+            if (!hasStartedDrag) {
+                if (Math.abs(deltaX) < dragThreshold && Math.abs(deltaY) < dragThreshold) {
+                    return; // 还没超过阈值，不执行拖拽
+                }
+                hasStartedDrag = true;
+                // 超过阈值后，更新光标样式
+                document.body.style.cursor = 'grabbing';
+            }
+            
+            // 更新图片位置（使用整数像素，避免模糊）
+            currentDraggingImg.style.marginLeft = Math.round(imgStartX + deltaX) + 'px';
+            currentDraggingImg.style.marginTop = Math.round(imgStartY + deltaY) + 'px';
+            
+            // 更新手柄位置
+            const handles = currentDraggingImg.nextElementSibling;
+            if (handles && handles.classList.contains('img-resize-handles')) {
+                updateHandlesPosition(currentDraggingImg, handles);
+            }
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            hasStartedDrag = false;
+            currentDraggingImg = null;
+            document.body.style.cursor = '';
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+
+        // ============ 图片调整大小功能 ============
+        let isResizing = false;
+        let resizeHandle = null;
+        let resizeStartX, resizeStartY;
+        let resizeStartWidth, resizeStartHeight;
+        let resizeStartMarginLeft, resizeStartMarginTop;
+        let currentResizingImg = null;
+        let resizeThreshold = 2; // 调整大小阈值，需要移动超过这个像素才开始调整
+        let hasStartedResize = false;
+
+        function startResize(e, img, direction) {
+            isResizing = true;
+            hasStartedResize = false;
+            resizeHandle = direction;
+            currentResizingImg = img;
+            
+            resizeStartX = e.clientX;
+            resizeStartY = e.clientY;
+            resizeStartWidth = img.offsetWidth;
+            resizeStartHeight = img.offsetHeight;
+            resizeStartMarginLeft = parseFloat(img.style.marginLeft) || 0;
+            resizeStartMarginTop = parseFloat(img.style.marginTop) || 0;
+            
+            document.addEventListener('mousemove', onResize);
+            document.addEventListener('mouseup', stopResize);
+            
+            e.preventDefault();
+        }
+
+        function onResize(e) {
+            if (!isResizing || !resizeHandle || !currentResizingImg) return;
+            
+            const deltaX = e.clientX - resizeStartX;
+            const deltaY = e.clientY - resizeStartY;
+            
+            if (!hasStartedResize) {
+                if (Math.abs(deltaX) < resizeThreshold && Math.abs(deltaY) < resizeThreshold) {
+                    return;
+                }
+                hasStartedResize = true;
+                document.body.style.cursor = getResizeCursor(resizeHandle);
+            }
+            
+            let newWidth = resizeStartWidth;
+            let newHeight = resizeStartHeight;
+            let newMarginLeft = resizeStartMarginLeft;
+            let newMarginTop = resizeStartMarginTop;
+            
+            // 单独方向手柄
+            if (resizeHandle === 'e') {
+                newWidth += deltaX;
+            }
+            if (resizeHandle === 'w') {
+                newWidth -= deltaX;
+                newMarginLeft += deltaX;
+            }
+            if (resizeHandle === 's') {
+                newHeight += deltaY;
+            }
+            if (resizeHandle === 'n') {
+                newHeight -= deltaY;
+                newMarginTop += deltaY;
+            }
+            
+            // 四角手柄
+            if (resizeHandle === 'se') {
+                newWidth += deltaX;
+                newHeight += deltaY;
+            }
+            if (resizeHandle === 'sw') {
+                newWidth -= deltaX;
+                newHeight += deltaY;
+                newMarginLeft += deltaX;
+            }
+            if (resizeHandle === 'ne') {
+                newWidth += deltaX;
+                newHeight -= deltaY;
+                newMarginTop += deltaY;
+            }
+            if (resizeHandle === 'nw') {
+                newWidth -= deltaX;
+                newHeight -= deltaY;
+                newMarginLeft += deltaX;
+                newMarginTop += deltaY;
+            }
+            
+            // 限制尺寸
+            newWidth = Math.max(80, newWidth);
+            newHeight = Math.max(80, newHeight);
+            const maxWidth = currentResizingImg.parentNode.offsetWidth * 0.95;
+            newWidth = Math.min(maxWidth, newWidth);
+            newHeight = Math.min(maxWidth * 1.2, newHeight);
+            
+            // 保持宽高比
+            const ratio = resizeStartWidth / resizeStartHeight;
+            if (resizeHandle === 'n' || resizeHandle === 's' || resizeHandle === 'nw' || resizeHandle === 'ne') {
+                newWidth = newHeight * ratio;
+                if (resizeHandle === 'w' || resizeHandle === 'nw' || resizeHandle === 'sw') {
+                    newMarginLeft = resizeStartMarginLeft + resizeStartWidth - newWidth;
+                }
+            } else if (resizeHandle === 'e' || resizeHandle === 'w' || resizeHandle === 'se' || resizeHandle === 'sw') {
+                newHeight = newWidth / ratio;
+                if (resizeHandle === 'n' || resizeHandle === 'nw' || resizeHandle === 'ne') {
+                    newMarginTop = resizeStartMarginTop + resizeStartHeight - newHeight;
+                }
+            }
+            
+            // 应用样式
+            currentResizingImg.style.width = Math.round(newWidth) + 'px';
+            currentResizingImg.style.height = Math.round(newHeight) + 'px';
+            currentResizingImg.style.marginLeft = Math.round(newMarginLeft) + 'px';
+            currentResizingImg.style.marginTop = Math.round(newMarginTop) + 'px';
+            currentResizingImg.style.maxWidth = 'none';
+            currentResizingImg.style.maxHeight = 'none';
+            
+            // 更新手柄位置
+            const handles = currentResizingImg.nextElementSibling;
+            if (handles && handles.classList.contains('img-resize-handles')) {
+                updateHandlesPosition(currentResizingImg, handles);
+            }
+        }
+
+        function getResizeCursor(direction) {
+            const cursors = {
+                'nw': 'nw-resize',
+                'n': 'n-resize',
+                'ne': 'ne-resize',
+                'w': 'w-resize',
+                'e': 'e-resize',
+                'sw': 'sw-resize',
+                's': 's-resize',
+                'se': 'se-resize'
+            };
+            return cursors[direction] || 'default';
+        }
+
+        function stopResize() {
+            isResizing = false;
+            hasStartedResize = false;
+            resizeHandle = null;
+            currentResizingImg = null;
+            document.body.style.cursor = '';
+            document.removeEventListener('mousemove', onResize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+
+        // ============ 按钮状态 ============
+        function updateButtons() {
+            const title = document.getElementById('title').value.trim();
+            const content = editor.innerText.trim();
+            const selected = getSelectedPlatforms();
+            const hasContent = title && content;
+
+            document.getElementById('adapt-btn').disabled = !hasContent || selected.length === 0;
+            document.getElementById('preview-btn').disabled = adaptedResults.length === 0;
+            document.getElementById('publish-btn').disabled = adaptedResults.length === 0;
+            document.getElementById('insert-img-btn').disabled = uploadedMaterials.length === 0;
+        }
+
+        // ============ 提示消息 ============
+        function showAlert(msg, type = 'info') {
+            const el = document.getElementById('alert');
+            el.className = `alert alert-${type} show`;
+            el.textContent = msg;
+            setTimeout(() => el.classList.remove('show'), 4000);
+        }
+
+        // ============ 编辑器工具 ============
+        function insertText(before, after = '') {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            const range = selection.getRangeAt(0);
+            const selectedText = range.toString();
+            
+            // 先删除选中的内容
+            range.deleteContents();
+            
+            // 创建文本节点并插入
+            const textNode = document.createTextNode(before + selectedText + after);
+            range.insertNode(textNode);
+            
+            // 将光标移动到插入文本的末尾
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            editor.focus();
+            updateContentCount();
+        }
+
+        // 在光标位置插入图片
+        function insertImageAtCursor(src, filename) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            const range = selection.getRangeAt(0);
+            
+            // 创建图片元素
+            const img = document.createElement('img');
+            img.src = src;
+            img.dataset.filename = filename;
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.borderRadius = '8px';
+            img.style.margin = '8px 0';
+            
+            // 插入图片
+            range.deleteContents();
+            range.insertNode(img);
+            
+            // 在图片后插入换行
+            const br = document.createElement('br');
+            range.collapse(false);
+            range.insertNode(br);
+            
+            // 将光标移动到换行后
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            editor.focus();
+            updateContentCount();
+            showAlert(`✅ 图片已插入`, 'success');
+        }
+
+        // 删除选中的图片
+        function deleteSelectedImage() {
+            const selectedImg = document.querySelector('.editor-content img.selected');
+            if (selectedImg) {
+                // 同时移除手柄
+                const handles = selectedImg.nextElementSibling;
+                if (handles && handles.classList.contains('img-resize-handles')) {
+                    handles.remove();
+                }
+                selectedImg.remove();
+                document.getElementById('delete-img-btn').disabled = true;
+                document.getElementById('edit-img-btn').disabled = true;
+                updateContentCount();
+                showAlert('图片已删除', 'info');
+            }
+        }
+
+        // 添加图片拖拽事件监听器
+        editor.addEventListener('mousedown', startDrag);
+
+        // ============ 图片上传 ============
+        const uploadArea = document.getElementById('upload-area');
+        const uploadFile = document.getElementById('upload-file');
+
+        uploadArea.addEventListener('click', () => uploadFile.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) uploadImage(file);
+        });
+
+        uploadFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) uploadImage(file);
+        });
+
+        async function uploadImage(file, callback = null) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/material/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // 保存到素材列表
+                    const material = {
+                        id: data.material_id,
+                        filename: data.filename,
+                        original_name: data.original_name || data.filename,
+                        url: `/uploads/${data.filename}`
+                    };
+                    uploadedMaterials.push(material);
+                    
+                    // 更新素材库显示
+                    updateMaterialGallery();
+                    
+                    showAlert(`✅ 图片 "${data.filename}" 上传成功！`, 'success');
+                    
+                    // 如果有回调，执行回调（用于上传并插入）
+                    if (callback) callback(material);
+                } else {
+                    showAlert(data.message || '上传失败', 'error');
+                }
+            } catch (e) {
+                showAlert('上传失败，请重试', 'error');
+            }
+        }
+
+        // 更新素材库显示
+        function updateMaterialGallery() {
+            const gallery = document.getElementById('material-gallery');
+            const modalGallery = document.getElementById('modal-material-gallery');
+            
+            if (uploadedMaterials.length === 0) {
+                gallery.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">暂无素材，请上传图片</p>';
+                return;
+            }
+
+            const html = uploadedMaterials.map(m => `
+                <div class="material-item" onclick="insertMaterialToContent('${m.url}', '${m.filename}')">
+                    <img src="${m.url}" alt="${m.original_name}" />
+                    <span class="material-delete" onclick="event.stopPropagation(); deleteMaterial(${m.id})">×</span>
+                </div>
+            `).join('');
+            
+            gallery.innerHTML = html;
+            modalGallery.innerHTML = html;
+            updateButtons();
+        }
+
+        // 删除素材
+        function deleteMaterial(id) {
+            uploadedMaterials = uploadedMaterials.filter(m => m.id !== id);
+            updateMaterialGallery();
+            showAlert('已删除该素材', 'info');
+        }
+
+        // 插入素材到正文（真正插入图片）
+        function insertMaterialToContent(url, filename) {
+            insertImageAtCursor(url, filename);
+            closeMaterialModal();
+        }
+
+        // 上传并插入图片
+        function uploadAndInsertImage() {
+            document.getElementById('insert-upload-file').click();
+        }
+
+        document.getElementById('insert-upload-file').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                uploadImage(file, (material) => {
+                    insertMaterialToContent(material.url, material.filename);
+                });
+            }
+            // 重置input，允许重复选择同一文件
+            e.target.value = '';
+        });
+
+        // 显示素材库弹窗
+        function showMaterialGallery() {
+            updateMaterialGallery();
+            document.getElementById('material-modal').classList.add('show');
+        }
+
+        function closeMaterialModal() {
+            document.getElementById('material-modal').classList.remove('show');
+        }
+
+        // 点击遮罩关闭素材库弹窗
+        document.getElementById('material-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeMaterialModal();
+        });
+
+        // ============ 获取编辑器内容（含图片信息） ============
+        function getEditorContent() {
+            const content = {
+                text: editor.innerText || '',
+                html: editor.innerHTML || '',
+                images: []
+            };
+            
+            // 提取编辑器中的图片信息
+            const imgs = editor.querySelectorAll('img');
+            imgs.forEach(img => {
+                content.images.push({
+                    src: img.src,
+                    filename: img.dataset.filename || '',
+                    position: img.offsetTop
+                });
+            });
+            
+            return content;
+        }
+
+        // ============ 一键适配格式 ============
+        async function adaptContent() {
+            const title = document.getElementById('title').value.trim();
+            const content = getEditorContent();
+            const selectedPlatforms = getSelectedPlatforms();
+
+            if (!title || !content.text.trim()) {
+                showAlert('请输入标题和内容', 'warning');
+                return;
+            }
+
+            const adaptBtn = document.getElementById('adapt-btn');
+            adaptBtn.disabled = true;
+            adaptBtn.textContent = '⏳ 正在适配中...';
+
+            try {
+                const response = await fetch('/api/adapt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content, platforms: selectedPlatforms })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    adaptedResults = data.data;
+                    updateButtons();
+                    showAlert(`✅ 格式适配完成！共适配 ${data.success_count} 个平台`, 'success');
+                    setTimeout(() => previewContent(), 600);
+                } else {
+                    showAlert(data.message || '适配失败', 'error');
+                }
+            } catch (e) {
+                showAlert('网络错误，请稍后重试', 'error');
+            } finally {
+                adaptBtn.textContent = '🔄 一键适配格式';
+                adaptBtn.disabled = false;
+            }
+        }
+
+        function renderContentWithImages(content) {
+            if (!content) return '';
+            let html = escapeHtml(content);
+            
+            html = html.replace(/\[图片:([^\]]+)\]/g, (match, filename) => {
+                const material = uploadedMaterials.find(m => m.filename === filename || m.original_name === filename);
+                if (material) {
+                    return `<img src="${material.url}" alt="${filename}" class="preview-img" />`;
+                }
+                return `<img src="/static/images/placeholder.png" alt="${filename}" class="preview-img" />`;
+            });
+            
+            html = html.replace(/🖼️\s*图(\d+)\s*[：:]?\s*([^\n]*)/g, (match, index, desc) => {
+                const idx = parseInt(index) - 1;
+                if (idx >= 0 && idx < uploadedMaterials.length) {
+                    const material = uploadedMaterials[idx];
+                    return `<img src="${material.url}" alt="图${index}：${desc}" class="preview-img" />`;
+                }
+                return `<img src="/static/images/placeholder.png" alt="图${index}：${desc}" class="preview-img" />`;
+            });
+            
+            html = html.replace(/!\[([^\]]*)\]\([^)]+\)/g, (match, alt) => {
+                const idx = uploadedMaterials.findIndex(m => m.filename.includes(alt) || m.original_name.includes(alt));
+                if (idx >= 0) {
+                    return `<img src="${uploadedMaterials[idx].url}" alt="${alt}" class="preview-img" />`;
+                }
+                return `<img src="/static/images/placeholder.png" alt="${alt}" class="preview-img" />`;
+            });
+            
+            html = html.replace(/\n/g, '<br>');
+            return html;
+        }
+
+        // ============ 图片编辑功能 ============
+        let selectedImage = null;
+        let imageEditData = {
+            width: 100,
+            align: 'center',
+            float: 'none'
+        };
+
+        function editSelectedImage() {
+            const editor = document.getElementById('editor');
+            const selection = window.getSelection();
+            
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const container = range.commonAncestorContainer;
+                selectedImage = container.tagName === 'IMG' ? container : 
+                              container.parentElement?.tagName === 'IMG' ? container.parentElement : null;
+            }
+            
+            if (!selectedImage) {
+                const images = editor.querySelectorAll('img');
+                if (images.length > 0) {
+                    selectedImage = images[0];
+                }
+            }
+            
+            if (selectedImage) {
+                document.getElementById('edit-image-preview').src = selectedImage.src;
+                imageEditData.width = parseInt(selectedImage.style.width || '100');
+                imageEditData.align = selectedImage.style.textAlign || 'center';
+                imageEditData.float = selectedImage.style.float || 'none';
+                
+                document.getElementById('img-width').value = imageEditData.width;
+                document.getElementById('width-display').textContent = imageEditData.width + '%';
+                
+                document.querySelectorAll('#align-left, #align-center, #align-right').forEach(btn => btn.classList.remove('btn-primary'));
+                document.getElementById('align-' + imageEditData.align)?.classList.add('btn-primary');
+                
+                document.getElementById('image-edit-modal').classList.add('show');
+            }
+        }
+
+        function updateWidthDisplay() {
+            const width = document.getElementById('img-width').value;
+            document.getElementById('width-display').textContent = width + '%';
+            imageEditData.width = parseInt(width);
+        }
+
+        function setImageAlign(align) {
+            imageEditData.align = align;
+            document.querySelectorAll('#align-left, #align-center, #align-right').forEach(btn => btn.classList.remove('btn-primary'));
+            document.getElementById('align-' + align)?.classList.add('btn-primary');
+        }
+
+        function setImageFloat(floatVal) {
+            imageEditData.float = floatVal;
+        }
+
+        function applyImageChanges() {
+            if (selectedImage) {
+                selectedImage.style.width = imageEditData.width + '%';
+                selectedImage.style.maxWidth = '100%';
+                
+                if (imageEditData.float !== 'none') {
+                    selectedImage.style.float = imageEditData.float;
+                    selectedImage.style.margin = imageEditData.float === 'left' ? '0 10px 10px 0' : '0 0 10px 10px';
+                    selectedImage.style.textAlign = '';
+                } else {
+                    selectedImage.style.float = 'none';
+                    selectedImage.style.margin = '12px 0';
+                    selectedImage.style.display = 'block';
+                    selectedImage.style.marginLeft = imageEditData.align === 'center' ? 'auto' : 
+                                                  imageEditData.align === 'right' ? 'auto' : '0';
+                    selectedImage.style.marginRight = imageEditData.align === 'center' ? 'auto' : 
+                                                   imageEditData.align === 'right' ? '0' : 'auto';
+                }
+            }
+            closeImageEditModal();
+        }
+
+        function closeImageEditModal() {
+            document.getElementById('image-edit-modal').classList.remove('show');
+            selectedImage = null;
+        }
+
+        // ============ 预览 ============
+        function previewContent() {
+            if (adaptedResults.length === 0) return;
+
+            const tabsEl = document.getElementById('preview-tabs');
+            const panelsEl = document.getElementById('preview-panels');
+
+            tabsEl.innerHTML = '';
+            panelsEl.innerHTML = '';
+
+            adaptedResults.forEach((result, index) => {
+                const tab = document.createElement('div');
+                tab.className = `preview-tab ${index === 0 ? 'active' : ''}`;
+                tab.innerHTML = `${result.platform_icon || '📄'} ${result.platform_name}`;
+                tab.addEventListener('click', () => switchPreviewTab(index));
+                tabsEl.appendChild(tab);
+
+                const panel = document.createElement('div');
+                panel.className = `preview-panel ${index === 0 ? 'active' : ''}`;
+                panel.id = `panel-${index}`;
+
+                panel.innerHTML = renderPlatformPreview(result);
+                panelsEl.appendChild(panel);
+            });
+
+            document.getElementById('preview-modal').classList.add('show');
+        }
+
+        function renderPlatformPreview(result) {
+            const platform = result.platform_type;
+            const title = result.adapted_title || '(无标题)';
+            const content = result.adapted_content || '';
+            const tags = result.tags || [];
+            const images = result.images || [];
+            const imageCount = result.image_count || 0;
+
+            if (platform === 'xiaohongshu') {
+                return `
+                    <div class="preview-xiaohongshu">
+                        <div class="xhs-header">
+                            <div class="xhs-title">${title}</div>
+                        </div>
+                        <div class="xhs-content">
+                            ${formatContentForPlatform(content, 'xiaohongshu')}
+                            ${tags.length > 0 ? `<div class="xhs-tags">${tags.map(t => `<span class="xhs-tag">#${t}</span>`).join('')}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (platform === 'wechat') {
+                return `
+                    <div class="preview-wechat">
+                        <div class="wc-header">
+                            <div class="wc-title">${title}</div>
+                        </div>
+                        <div class="wc-content">
+                            ${formatContentForPlatform(content, 'wechat')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (platform === 'zhihu') {
+                return `
+                    <div class="preview-zhihu">
+                        <div class="zh-header">
+                            <div class="zh-question">${title}</div>
+                        </div>
+                        <div class="zh-content">
+                            ${formatContentForPlatform(content, 'zhihu')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (platform === 'bilibili') {
+                return `
+                    <div class="preview-bilibili">
+                        <div class="bili-header">
+                            <div class="bili-title">${title}</div>
+                        </div>
+                        <div class="bili-content">
+                            ${formatContentForPlatform(content, 'bilibili')}
+                            ${tags.length > 0 ? `<div class="bili-tags">${tags.map(t => `<span class="bili-tag">${t}</span>`).join('')}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 默认样式
+            return `
+                <div class="preview-title">📝 ${title}</div>
+                <div class="preview-stats">
+                    <span>📏 标题 ${result.title_length || 0} 字</span>
+                    <span>📄 正文 ${result.content_length || 0} 字</span>
+                    ${imageCount > 0 ? `<span>🖼️ 图片 ${imageCount} 张</span>` : ''}
+                </div>
+                <div class="preview-content">${renderContentWithImages(content)}</div>
+            `;
+        }
+
+        function formatContentForPlatform(content, platform) {
+            const paragraphs = content.split('\n\n').filter(p => p.trim());
+            let html = '';
+
+            if (platform === 'xiaohongshu') {
+                paragraphs.forEach(p => {
+                    if (p.startsWith('🖼️')) {
+                        html += `<div style="text-align:center;color:#FF6B6B;font-size:13px;padding:8px 0;">${p}</div>`;
+                    } else {
+                        html += `<p>${p}</p>`;
+                    }
+                });
+            } else if (platform === 'wechat') {
+                paragraphs.forEach((p, i) => {
+                    if (i === Math.floor(paragraphs.length / 2) && p.length > 50) {
+                        html += `<div class="wc-divider"></div>`;
+                    }
+                    if (p.startsWith('▌')) {
+                        html += `<p style="font-weight:600;color:#1a1a1a;margin-top:20px;">${p}</p>`;
+                    } else if (p.startsWith('🖼️')) {
+                        html += `<p style="color:#999;font-size:13px;">${p}</p>`;
+                    } else {
+                        html += `<p>${p}</p>`;
+                    }
+                });
+            } else if (platform === 'zhihu') {
+                paragraphs.forEach(p => {
+                    if (p.startsWith('**') && p.endsWith('**')) {
+                        html += `<h2 style="margin:20px 0 10px;">${p.replace(/\*\*/g, '')}</h2>`;
+                    } else if (p.startsWith('🖼️')) {
+                        html += `<p style="color:#056de8;font-size:13px;">${p}</p>`;
+                    } else {
+                        html += `<p>${p}</p>`;
+                    }
+                });
+            } else if (platform === 'bilibili') {
+                paragraphs.forEach(p => {
+                    if (p.startsWith('🖼️')) {
+                        html += `<p style="color:#00a1d6;font-size:13px;">${p}</p>`;
+                    } else {
+                        html += `<p>${p}</p>`;
+                    }
+                });
+            } else {
+                html = paragraphs.map(p => `<p>${p}</p>`).join('');
+            }
+
+            return html;
+        }
+
+        function switchPreviewTab(index) {
+            document.querySelectorAll('.preview-tab').forEach((t, i) => {
+                t.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.preview-panel').forEach((p, i) => {
+                p.classList.toggle('active', i === index);
+            });
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').classList.remove('show');
+        }
+
+        // 点击遮罩关闭
+        document.getElementById('preview-modal').addEventListener('click', function(e) {
+            if (e.target === this) closePreview();
+        });
+
+        // ESC关闭
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePreview();
+                closeMaterialModal();
+            }
+        });
+
+        // ============ 一键批量发布 ============
+        async function publishContent() {
+            const title = document.getElementById('title').value.trim();
+            const content = getEditorContent();
+            const selectedPlatforms = getSelectedPlatforms();
+
+            const publishBtn = document.getElementById('publish-btn');
+            publishBtn.disabled = true;
+            publishBtn.textContent = '⏳ 创建任务中...';
+
+            try {
+                const response = await fetch('/api/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        title, 
+                        content, 
+                        platforms: selectedPlatforms,
+                        materials: uploadedMaterials  // 传递素材信息
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentTaskId = data.task_id;
+                    showAlert(`📋 任务创建成功，共 ${data.platform_count} 个平台，开始发布...`, 'info');
+                    await executePublish(data.task_id);
+                } else {
+                    showAlert(data.message || '创建任务失败', 'error');
+                    publishBtn.disabled = false;
+                    publishBtn.textContent = '📤 一键批量发布';
+                }
+            } catch (e) {
+                showAlert('网络错误，请稍后重试', 'error');
+                publishBtn.disabled = false;
+                publishBtn.textContent = '📤 一键批量发布';
+            }
+        }
+
+        async function executePublish(taskId) {
+            const progressEl = document.getElementById('publish-progress');
+            const summaryEl = document.getElementById('publish-summary');
+            const selectedPlatforms = getSelectedPlatforms();
+
+            // 使用动态平台列表
+            const platformNames = {};
+            selectedPlatforms.forEach(p => {
+                if (allPlatforms[p]) {
+                    platformNames[p] = { name: allPlatforms[p].name, icon: allPlatforms[p].icon };
+                } else {
+                    platformNames[p] = { name: p, icon: '📄' };
+                }
+            });
+
+            progressEl.style.display = 'block';
+            summaryEl.classList.remove('show');
+            progressEl.innerHTML = selectedPlatforms.map(p => {
+                const info = platformNames[p] || { name: p, icon: '📄' };
+                return `
+                    <div class="progress-item" id="progress-${p}">
+                        <div class="platform-info">
+                            <span>${info.icon}</span>
+                            <span>${info.name}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="progress-spinner"></span>
+                            <span class="progress-badge badge-publishing">发布中</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            try {
+                // 提交发布任务
+                const response = await fetch(`/api/publish/execute/${taskId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // 使用SSE获取实时进度
+                    await subscribeToProgress(taskId);
+                } else {
+                    showAlert(data.message || '发布失败', 'error');
+                }
+            } catch (e) {
+                showAlert('发布执行失败: ' + e.message, 'error');
+            }
+        }
+
+        async function subscribeToProgress(taskId) {
+            return new Promise((resolve) => {
+                const eventSource = new EventSource(`/api/publish/progress/${taskId}`);
+
+                eventSource.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+
+                        if (data.type === 'progress') {
+                            // 更新每个平台的状态
+                            data.platforms.forEach(p => {
+                                const el = document.getElementById(`progress-${p.platform_type}`);
+                                if (el) {
+                                    const badge = el.querySelector('.progress-badge');
+                                    const spinner = el.querySelector('.progress-spinner');
+                                    if (spinner) spinner.remove();
+
+                                    if (p.status === 'success') {
+                                        badge.className = 'progress-badge badge-success';
+                                        badge.textContent = '✅ 发布成功';
+                                    } else if (p.status === 'failed') {
+                                        badge.className = 'progress-badge badge-failed';
+                                        badge.textContent = '❌ 发布失败';
+                                        if (p.error_message) {
+                                            const errSpan = document.createElement('span');
+                                            errSpan.style.cssText = 'font-size:11px;color:#e74c3c;';
+                                            errSpan.textContent = p.error_message;
+                                            el.appendChild(errSpan);
+                                        }
+                                    } else if (p.status === 'publishing') {
+                                        badge.className = 'progress-badge badge-publishing';
+                                        badge.textContent = '⏳ 发布中';
+                                    }
+                                }
+                            });
+                        } else if (data.type === 'complete') {
+                            // 任务完成，显示统计
+                            showPublishSummary(taskId);
+                            eventSource.close();
+                            resolve();
+                        } else if (data.type === 'error') {
+                            showAlert(data.message, 'error');
+                            eventSource.close();
+                            resolve();
+                        }
+                    } catch (e) {
+                        console.error('解析进度数据失败:', e);
+                    }
+                };
+
+                eventSource.onerror = function() {
+                    eventSource.close();
+                    resolve();
+                };
+            });
+        }
+
+        async function showPublishSummary(taskId) {
+            try {
+                const response = await fetch(`/api/publish/status/${taskId}`);
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    const summary = data.data.summary;
+                    const summaryEl = document.getElementById('publish-summary');
+                    summaryEl.classList.add('show');
+                    summaryEl.innerHTML = `
+                        <div class="summary-card">
+                            <div class="num num-total">${summary.total}</div>
+                            <div class="lbl">总平台数</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="num num-success">${summary.success}</div>
+                            <div class="lbl">发布成功</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="num num-failed">${summary.failed}</div>
+                            <div class="lbl">发布失败</div>
+                        </div>
+                    `;
+
+                    const statusMsg = summary.failed > 0
+                        ? `发布完成：成功 ${summary.success} 个，失败 ${summary.failed} 个`
+                        : `🎉 全部发布成功！`;
+
+                    showAlert(statusMsg, summary.failed > 0 ? 'warning' : 'success');
+                }
+            } catch (e) {
+                console.error('获取发布统计失败:', e);
+            } finally {
+                document.getElementById('publish-btn').disabled = false;
+                document.getElementById('publish-btn').textContent = '📤 一键批量发布';
+            }
+        }
+
+        // ============ 工具函数 ============
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function logout() {
+            window.location.href = '/logout';
+        }
+
+        // 初始化素材库显示
+        updateMaterialGallery();
+    </script>
+</body>
+</html>
